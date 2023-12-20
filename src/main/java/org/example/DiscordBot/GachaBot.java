@@ -145,14 +145,22 @@ public class GachaBot extends ListenerAdapter implements EventListener {
                 System.out.println("Failed");
                 throw new RuntimeException(e);
             }
-        } else if ("~list".equals(command[0])) {
+        }
+        else if ("~list".equals(command[0])) {
             listTrack((TextChannel) event.getChannel());
+        }
+
+        // stop everything first then
+        // get the guild, then get the AudioManager and close audio connection
+        else if ("~end".equals(command[0])) {
+            EndSession((TextChannel) event.getChannel());
+            ((TextChannel) event.getChannel()).getGuild().getAudioManager().closeAudioConnection();
         }
         super.onMessageReceived(event);
     }
 
     private static void connectToFirstVoiceChannel(AudioManager audioManager) {
-        if (!audioManager.isConnected() && !audioManager.isConnected()) {
+        if (!audioManager.isConnected()) {
             for (VoiceChannel voiceChannel : audioManager.getGuild().getVoiceChannels()) {
                 audioManager.openAudioConnection(voiceChannel);
                 break;
@@ -192,6 +200,12 @@ public class GachaBot extends ListenerAdapter implements EventListener {
         }
         channel.sendMessage("Here's the current track list: ").queue();
         channel.sendMessage(list).queue();
+    }
+
+    private void EndSession(TextChannel channel){
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        channel.sendMessage("Let us meet again!").queue();
+        musicManager.scheduler.EndAll(musicManager.getPlayer());
     }
 
 
