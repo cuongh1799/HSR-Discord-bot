@@ -1,6 +1,5 @@
 package org.example.DiscordBot;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
@@ -28,19 +27,18 @@ import java.util.Map;
 import java.util.Random;
 
 import org.example.DiscordBot.mediaPlayer.*;
-import org.w3c.dom.Text;
 
-public class GachaBot extends ListenerAdapter implements EventListener {
+public class RuanMeiBot extends ListenerAdapter implements EventListener {
     public static void main(String[] args) throws Exception {
 
-    String token = "";
+    String token = "MTE4MjkzMjI1NDI5MzQ5OTk2NA.GWmQ03.y-wC852pehUuJC_l1YatnYpLH5oyajw-Qswvzw";
 
     JDA jda = JDABuilder.createLight(token,
                     GatewayIntent.GUILD_MESSAGES,
                     GatewayIntent.MESSAGE_CONTENT,
                     GatewayIntent.GUILD_MEMBERS,
                     GatewayIntent.GUILD_VOICE_STATES)
-            .addEventListeners(new GachaBot())
+            .addEventListeners(new RuanMeiBot())
             .setActivity(Activity.playing("with your pulls"))
             .build();
         jda.updateCommands().addCommands(
@@ -49,14 +47,15 @@ public class GachaBot extends ListenerAdapter implements EventListener {
             Commands.slash("path", "Let Ruan Mei choose a path for you"),
             Commands.slash("ruanmei", "schizo about ruanmei"),
             Commands.slash("hesitatetopull", "Let Silver Wolf enlighten you"),
-            Commands.slash("pullruanmei", "All roads lead to Ruan Mei")
+            Commands.slash("pullruanmei", "All roads lead to Ruan Mei"),
+            Commands.slash("goodbye", "Farewell, may the Trailblaze guide us")
         ).queue();
     }
 
     private final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
     private final Map<Long, GuildMusicManager> musicManagerMap = new HashMap<>();
 
-    private GachaBot() {
+    private RuanMeiBot() {
 //        this.musicManagerMap = new HashMap<>();
 //        this.playerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerRemoteSources(playerManager);
@@ -262,6 +261,11 @@ public class GachaBot extends ListenerAdapter implements EventListener {
             case "pullruanmei":
                 FileUpload  allroadstoruanmei = FileUpload.fromData(allroadleadstoruanmei);
                 event.replyFiles(allroadstoruanmei).queue();
+                break;
+
+            case "goodbye":
+                event.reply("Goodbye, trailblazer").queue();
+                event.getJDA().shutdownNow();
                 break;
 
         }
