@@ -20,6 +20,8 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
   /**
    * @param audioPlayer Audio player to wrap.
    */
+
+  // constructor for AudioPlayerSendHandler
   public AudioPlayerSendHandler(AudioPlayer audioPlayer) {
     this.audioPlayer = audioPlayer;
     this.buffer = ByteBuffer.allocate(727);
@@ -44,4 +46,7 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
   public boolean isOpus() {
     return true;
   }
+
+
 }
+

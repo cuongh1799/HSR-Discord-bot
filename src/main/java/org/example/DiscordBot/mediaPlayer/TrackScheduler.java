@@ -53,4 +53,19 @@ public class TrackScheduler extends AudioEventAdapter {
       nextTrack();
     }
   }
+
+  @Override
+  // overide the function because in the DefaultAudioPlayer.class it didn't get implemented
+  public void onPlayerPause(AudioPlayer player){
+    if(!player.isPaused()){
+      player.setPaused(true);
+    }
+  }
+
+
+  public void onPlayerResume(AudioPlayer player){
+    if(player.isPaused()){
+      player.setPaused(false);
+    }
+  }
 }
