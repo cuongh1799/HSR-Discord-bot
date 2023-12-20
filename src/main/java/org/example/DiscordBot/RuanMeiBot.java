@@ -31,7 +31,7 @@ import org.example.DiscordBot.mediaPlayer.*;
 public class RuanMeiBot extends ListenerAdapter implements EventListener {
     public static void main(String[] args) throws Exception {
 
-    String token = "MTE4MjkzMjI1NDI5MzQ5OTk2NA.GWmQ03.y-wC852pehUuJC_l1YatnYpLH5oyajw-Qswvzw";
+    String token = "";
 
     JDA jda = JDABuilder.createLight(token,
                     GatewayIntent.GUILD_MESSAGES,
