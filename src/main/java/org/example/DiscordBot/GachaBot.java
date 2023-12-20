@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 
 import org.example.DiscordBot.mediaPlayer.*;
+import org.w3c.dom.Text;
 
 public class GachaBot extends ListenerAdapter implements EventListener {
     public static void main(String[] args) throws Exception {
@@ -68,8 +69,7 @@ public class GachaBot extends ListenerAdapter implements EventListener {
         // get the GuildMusicManager by finding on the musicManagers map based on get(guildID) key
         GuildMusicManager musicManager = musicManagerMap.get(guildId);
 
-        // if get key and the key doesn't have any musicManager
-        // then create it
+        // if get key and the key doesn't have any musicManager, create one
         if (musicManager == null) {
             musicManager = new GuildMusicManager(playerManager);
             musicManagerMap.put(guildId, musicManager);
@@ -145,8 +145,19 @@ public class GachaBot extends ListenerAdapter implements EventListener {
                 System.out.println("Failed");
                 throw new RuntimeException(e);
             }
+        } else if ("~list".equals(command[0])) {
+            listTrack((TextChannel) event.getChannel());
         }
         super.onMessageReceived(event);
+    }
+
+    private static void connectToFirstVoiceChannel(AudioManager audioManager) {
+        if (!audioManager.isConnected() && !audioManager.isConnected()) {
+            for (VoiceChannel voiceChannel : audioManager.getGuild().getVoiceChannels()) {
+                audioManager.openAudioConnection(voiceChannel);
+                break;
+            }
+        }
     }
 
     // more info on the unpause and pause, visit the TrackScheduler class for implementation
@@ -172,13 +183,15 @@ public class GachaBot extends ListenerAdapter implements EventListener {
         channel.sendMessage("Unpause!").queue();
     }
 
-    private static void connectToFirstVoiceChannel(AudioManager audioManager) {
-        if (!audioManager.isConnected() && !audioManager.isConnected()) {
-            for (VoiceChannel voiceChannel : audioManager.getGuild().getVoiceChannels()) {
-                audioManager.openAudioConnection(voiceChannel);
-                break;
-            }
+    private void listTrack(TextChannel channel){
+        String list = "";
+        int count = 0;
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        for(AudioTrack e : musicManager.scheduler.getBlockingQueue()){
+            list += count + ". " + e.getInfo().title +"\n";
         }
+        channel.sendMessage("Here's the current track list: ").queue();
+        channel.sendMessage(list).queue();
     }
 
 

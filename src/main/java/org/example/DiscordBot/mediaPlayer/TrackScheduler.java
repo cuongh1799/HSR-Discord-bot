@@ -68,4 +68,8 @@ public class TrackScheduler extends AudioEventAdapter {
       player.setPaused(false);
     }
   }
+
+  public BlockingQueue<AudioTrack> getBlockingQueue(){
+    return queue;
+  }
 }
