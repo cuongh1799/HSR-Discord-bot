@@ -31,7 +31,7 @@ import org.example.DiscordBot.mediaPlayer.*;
 public class discordbot extends ListenerAdapter implements EventListener {
     public static void main(String[] args) throws Exception {
 
-    String token = "MTE4MjkzMjI1NDI5MzQ5OTk2NA.GHCSGt.yitSuoo5nSOk_AFVReb93m9afCuOrMjhZMuKrg";
+    String token = "";
 
     JDA jda = JDABuilder.createLight(token,
                     GatewayIntent.GUILD_MESSAGES,
