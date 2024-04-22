@@ -74,6 +74,14 @@ public class TrackScheduler extends AudioEventAdapter {
   public void EndAll(AudioPlayer player){
       player.destroy();
   }
+
+  public void setVolume(int volume){
+    player.setVolume(volume);
+  }
+
+  public int getVolume(){
+    return player.getVolume();
+  }
 }
 
 

@@ -33,7 +33,6 @@ public class MusicBot extends ListenerAdapter  {
     public static AudioPlayerManager getPlayerManager() {
         return playerManager;
     }
-
     public static Map<Long, GuildMusicManager> getMusicManagerMap() {
         return musicManagerMap;
     }
@@ -141,6 +140,16 @@ public class MusicBot extends ListenerAdapter  {
         }
         channel.sendMessage("Here's the current track list: ").queue();
         channel.sendMessage(list).queue();
+    }
+
+    public static void setPlayerVolume(TextChannel channel, int volume){
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        musicManager.scheduler.setVolume(volume);
+    }
+
+    public static int viewPlayerVolume(TextChannel channel){
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        return musicManager.scheduler.getVolume();
     }
 
     public static void EndSession(TextChannel channel){
