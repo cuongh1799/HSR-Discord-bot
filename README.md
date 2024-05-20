@@ -3,7 +3,7 @@
 ### DISCLAIMER: THE IMPLEMENTATION OF LAVAPLAYER IS HEAVILY BASED ON THEIR EXAMPLE ON THEIR GITHUB PAGE
 
 ## APIs
-Ruan Mei utilize the JDA API for interacting with discord, as well as using LavaPlayer to play music
+The bot utilize the JDA API for interacting with discord, as well as using LavaPlayer to play music
 For GUI, Ruan Mei use JavaFx and SceneBuilder
 
 ## How APIS are used
@@ -86,7 +86,7 @@ Example:
 ### LavaPlayer
 Now this is the fun part, let me put it this way
 
-Ruan Mei currently have these ```~``` commands
+the bot currently have these ```~``` commands
 ```
 ~play
 ~skip
