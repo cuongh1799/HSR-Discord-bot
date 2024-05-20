@@ -4,7 +4,7 @@
 
 ## APIs
 The bot utilize the JDA API for interacting with discord, as well as using LavaPlayer to play music
-For GUI, Ruan Mei use JavaFx and SceneBuilder
+~~For GUI, Ruan Mei use JavaFx and SceneBuilder~~ GUI is in the work
 
 ## How APIS are used
 
