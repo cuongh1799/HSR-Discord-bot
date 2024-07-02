@@ -20,24 +20,137 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.managers.AudioManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.example.DiscordBot.mediaPlayer.GuildMusicManager;
 import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 
-import org.example.DiscordBot.mediaPlayer.*;
+public class Main extends ListenerAdapter implements EventListener {
+    private final AudioPlayerManager playerManager;
+    private final Map<Long, GuildMusicManager> musicManagers;
 
-public class discordbot extends ListenerAdapter implements EventListener {
+    private Main() {
+        this.musicManagers = new HashMap<>();
+
+        this.playerManager = new DefaultAudioPlayerManager();
+        AudioSourceManagers.registerRemoteSources(playerManager);
+        AudioSourceManagers.registerLocalSource(playerManager);
+    }
+
+    private synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
+        long guildId = Long.parseLong(guild.getId());
+        GuildMusicManager musicManager = musicManagers.get(guildId);
+
+        if (musicManager == null) {
+            musicManager = new GuildMusicManager(playerManager);
+            musicManagers.put(guildId, musicManager);
+        }
+
+        guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
+
+        return musicManager;
+    }
+
+    private static void connectToFirstVoiceChannel(AudioManager audioManager) {
+        if (!audioManager.isConnected() && !audioManager.isConnected()) {
+            for (VoiceChannel voiceChannel : audioManager.getGuild().getVoiceChannels()) {
+                audioManager.openAudioConnection(voiceChannel);
+                break;
+            }
+        }
+    }
+
+    private void loadAndPlay(final TextChannel channel, final String trackUrl) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+
+        playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                channel.sendMessage("Adding to queue " + track.getInfo().title).queue();
+
+                play(channel.getGuild(), musicManager, track);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                AudioTrack firstTrack = playlist.getSelectedTrack();
+
+                if (firstTrack == null) {
+                    firstTrack = playlist.getTracks().get(0);
+                }
+
+                channel.sendMessage("Adding to queue " + firstTrack.getInfo().title + " (first track of playlist " + playlist.getName() + ")").queue();
+
+                play(channel.getGuild(), musicManager, firstTrack);
+            }
+
+            @Override
+            public void noMatches() {
+                channel.sendMessage("Nothing found by " + trackUrl).queue();
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                channel.sendMessage("Could not play: " + exception.getMessage()).queue();
+            }
+        });
+    }
+
+    private void play(Guild guild, GuildMusicManager musicManager, AudioTrack track) {
+        connectToFirstVoiceChannel(guild.getAudioManager());
+
+        musicManager.scheduler.queue(track);
+    }
+
+    private void skipTrack(TextChannel channel) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        musicManager.scheduler.nextTrack();
+
+        channel.sendMessage("Skipped to next track.").queue();
+    }
+
+    private void unpauseTrack(TextChannel channel) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        musicManager.getPlayer().setPaused(false);
+    }
+
+    private void pauseTrack(TextChannel channel) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        musicManager.getPlayer().setPaused(true);
+    }
+
+    private int viewPlayerVolume(TextChannel channel) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        return musicManager.player.getVolume();
+    }
+
+    private void EndSession(TextChannel channel) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        musicManager.player.destroy();
+    }
+
+    private void listTrack(TextChannel channel) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        BlockingQueue<AudioTrack> queue = musicManager.scheduler.getBlockingQueue();
+        int num = 1;
+        for(AudioTrack e : queue){
+            channel.sendMessage(num + e.getInfo().title).queue();
+            num++;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-    String token = "";
+    String token = "MTE4MjkzMjI1NDI5MzQ5OTk2NA.GWD-c6.uIpROyb3K-r4_4Sf-m6mr2KrfHwSJKsuI9z5BE";
 
     JDA jda = JDABuilder.createLight(token,
                     GatewayIntent.GUILD_MESSAGES,
                     GatewayIntent.MESSAGE_CONTENT,
                     GatewayIntent.GUILD_MEMBERS,
                     GatewayIntent.GUILD_VOICE_STATES)
-            .addEventListeners(new discordbot()) // THIS IS IMPORTANT AS COMMENTING THIS OUT, THE BOT WON'T ABLE TO RECEIVE YOUR MESSAGE
+            .addEventListeners(new Main()) // THIS IS IMPORTANT AS COMMENTING THIS OUT, THE BOT WON'T ABLE TO RECEIVE YOUR MESSAGE
             .setActivity(Activity.customStatus("A luminous crimson light, lurks within the abyss of the world."))
             .build();
         jda.updateCommands().addCommands(
@@ -54,48 +167,37 @@ public class discordbot extends ListenerAdapter implements EventListener {
         ).queue();
     }
 
-    MusicBot musicbotnew = new MusicBot();
     public void onMessageReceived(MessageReceivedEvent event) {
         String[] command = event.getMessage().getContentRaw().split(" ", 2);
 
         switch(command[0]){
             case "!play":
-                MusicBot.loadAndPlay((TextChannel) event.getChannel(), command[1]);
+                loadAndPlay((TextChannel) event.getChannel(), command[1]);
                 break;
             case "!skip":
-                MusicBot.skipTrack((TextChannel) event.getChannel());
+                skipTrack((TextChannel) event.getChannel());
                 break;
             case "!pause":
-                try {
-                    MusicBot.pauseTrack((TextChannel) event.getChannel());
-                } catch (InterruptedException e) {
-                    System.out.println("Failed");
-                    throw new RuntimeException(e);
-                }
+                pauseTrack((TextChannel) event.getChannel());
                 break;
             case "!unpause":
-                try {
-                    MusicBot.unpauseTrack((TextChannel) event.getChannel());
-                } catch (InterruptedException e) {
-                    System.out.println("Failed");
-                    throw new RuntimeException(e);
-                }
+                unpauseTrack((TextChannel) event.getChannel());
                 break;
             case "!list":
-                MusicBot.listTrack((TextChannel) event.getChannel());
+                listTrack((TextChannel) event.getChannel());
                 break;
             case "!end":
-                MusicBot.EndSession((TextChannel) event.getChannel());
+                EndSession((TextChannel) event.getChannel());
                 ((TextChannel) event.getChannel()).getGuild().getAudioManager().closeAudioConnection();
                 break;
             case "!volume":
-                event.getChannel().sendMessage("Current volume is " + MusicBot.viewPlayerVolume((TextChannel) event.getChannel())).queue();
+                event.getChannel().sendMessage("Current volume is " + viewPlayerVolume((TextChannel) event.getChannel())).queue();
                 break;
             case "!acheron":
                 event.getChannel().sendMessage("https://projektacheron.vercel.app/").queue();
                 break;
             case "!whyeffort":
-                String whyeffort = "Behold, the era of mundane pulling is over.\n" +
+                String whyeffort = "The era of mundane pulling is over.\n" +
                         "\n" +
                         "No more shall it be a flavorless, dreary, and uneventful ordeal.\n" +
                         "\n" +
@@ -113,36 +215,6 @@ public class discordbot extends ListenerAdapter implements EventListener {
                 event.getChannel().sendMessage(whyeffort).queue();
                 break;
         }
-
-//        if ("~play".equals(command[0]) && command.length == 2) {
-//            MusicBot.loadAndPlay((TextChannel) event.getChannel(), command[1]);
-//        }
-//        else if ("~skip".equals(command[0])) {
-//            MusicBot.skipTrack((TextChannel) event.getChannel());
-//        }
-//        else if ("~pause".equals(command[0])) {
-//            try {
-//                MusicBot.pauseTrack((TextChannel) event.getChannel());
-//            } catch (InterruptedException e) {
-//                System.out.println("Failed");
-//                throw new RuntimeException(e);
-//            }
-//        }
-//        else if("~unpause".equals(command[0])){
-//            try {
-//                MusicBot.unpauseTrack((TextChannel) event.getChannel());
-//            } catch (InterruptedException e) {
-//                System.out.println("Failed");
-//                throw new RuntimeException(e);
-//            }
-//        }
-//        else if ("~list".equals(command[0])) {
-//            MusicBot.listTrack((TextChannel) event.getChannel());
-//        }
-//        else if ("~end".equals(command[0])) {
-//            MusicBot.EndSession((TextChannel) event.getChannel());
-//            ((TextChannel) event.getChannel()).getGuild().getAudioManager().closeAudioConnection();
-//        }
         super.onMessageReceived(event);
     }
 
@@ -157,22 +229,6 @@ public class discordbot extends ListenerAdapter implements EventListener {
         File allroadleadstoruanmei = new File("src/main/resources/allroadleadstoruanmei.png");
 
         switch (event.getName()) {
-//            case "play":
-//                //String[] command = event.getMessage().getContentRaw().split(" ", 2);
-//                String[] command = event.getInteraction().toString().split(" ", 2);
-//                //event.reply("the link is " + command[1]).queue();
-//                event.reply("").setEphemeral(false) // reply or acknowledge
-//                        .flatMap(v ->
-//                                event.getHook().editOriginalFormat("amgousg" + command[1], System.currentTimeMillis() - time) // then edit original
-//                        ).queue();
-
-//            case "link":
-//                event.reply("").setEphemeral(false) // reply or acknowledge
-//                        .flatMap(v ->
-//                                event.getHook().editOriginalFormat("insert link here") // then edit original
-//                        ).queue();
-//                break;
-
             case "long":
                 event.reply("").setEphemeral(false) // reply or acknowledge
                         .flatMap(v ->
@@ -218,15 +274,15 @@ public class discordbot extends ListenerAdapter implements EventListener {
 //                break;
 
             case "goodbye":
-//                event.reply("").setEphemeral(false) // reply or acknowledge
-//                        .flatMap(v ->
-//                                event.getHook().editOriginalFormat("Let us once again cross roads, in this vast universe.", System.currentTimeMillis() - time) // then edit original
-//                        ).queue();
-//                try {
-//                    wait(10000);
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
+                event.reply("").setEphemeral(false) // reply or acknowledge
+                        .flatMap(v ->
+                                event.getHook().editOriginalFormat("Let us once again cross roads, in this vast universe.", System.currentTimeMillis() - time) // then edit original
+                        ).queue();
+                try {
+                    wait(10000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 event.getJDA().shutdownNow();
                 break;
 

@@ -2,7 +2,9 @@ package org.example.DiscordBot.mediaPlayer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame;
+
 import java.nio.Buffer;
+
 import net.dv8tion.jda.api.audio.AudioSendHandler;
 
 import java.nio.ByteBuffer;
@@ -20,11 +22,9 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
   /**
    * @param audioPlayer Audio player to wrap.
    */
-
-  // constructor for AudioPlayerSendHandler
   public AudioPlayerSendHandler(AudioPlayer audioPlayer) {
     this.audioPlayer = audioPlayer;
-    this.buffer = ByteBuffer.allocate(727);
+    this.buffer = ByteBuffer.allocate(1024);
     this.frame = new MutableAudioFrame();
     this.frame.setBuffer(buffer);
   }
@@ -46,6 +46,4 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
   public boolean isOpus() {
     return true;
   }
-
 }
-
