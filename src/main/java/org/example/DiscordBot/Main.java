@@ -143,7 +143,7 @@ public class Main extends ListenerAdapter implements EventListener {
     }
 
     public static void main(String[] args) throws Exception {
-    String token = "MTE4MjkzMjI1NDI5MzQ5OTk2NA.GWD-c6.uIpROyb3K-r4_4Sf-m6mr2KrfHwSJKsuI9z5BE";
+    String token = "";
 
     JDA jda = JDABuilder.createLight(token,
                     GatewayIntent.GUILD_MESSAGES,
